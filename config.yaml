@@ -1,0 +1,3 @@
+port: 3000
+bindAddress: 0.0.0.0
+bearerToken: some-secret-token
