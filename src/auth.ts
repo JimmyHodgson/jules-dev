@@ -50,13 +50,21 @@ passport.use(new BearerStrategy(
         return done(new Error('Invalid introspection response'));
       }
     } catch (error) {
-      // Network error or other issue calling Hydra
-      console.error('Error during Hydra token introspection:', error.message || error);
-      // Check if it's an axios error and provide more detail
+      // Improved error logging
+      let errorMessage = 'Unknown error during Hydra introspection';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      console.error(`Error during Hydra token introspection: ${errorMessage}`);
+
+      // Keep the Axios-specific check and add logging for other error types
       if (axios.isAxiosError(error)) {
         console.error('Axios error details:', error.response?.status, error.response?.data);
+      } else {
+        // Log the raw error if it's not an Axios error or standard Error
+        console.error('Raw introspection error:', error);
       }
-      return done(error); // Pass the error to Passport
+      return done(error); // Pass the original error (regardless of type) to Passport
     }
   }
 ));
