@@ -47,12 +47,21 @@ Application configuration is managed in the `config.yaml` file located in the pr
 ```yaml
 port: 3000
 bindAddress: 0.0.0.0
-bearerToken: some-secret-token
+bearerToken: some-secret-token # Used only if enableDevToken is true
+hydraIntrospectionUrl: http://localhost:4445/oauth2/introspect # URL for Hydra token introspection
+enableDevToken: true # Set to true to allow the static bearerToken for testing
 ```
 
 *   `port`: The port number the server will listen on.
-*   `bindAddress`: The network address the server will bind to (e.g., `0.0.0.0` to listen on all available network interfaces, `127.0.0.1` for localhost only).
-*   `bearerToken`: The secret token required to access protected API endpoints. **Change this to a strong, unique secret in a real application.**
+*   `bindAddress`: The network address the server will bind to (e.g., `0.0.0.0` for all interfaces, `127.0.0.1` for localhost).
+*   `bearerToken`: A static Bearer token used for development/testing **only when `enableDevToken` is `true`**.
+*   `hydraIntrospectionUrl`: The URL of the Ory Hydra OAuth2 Token Introspection endpoint. This is used for authentication when `enableDevToken` is `false` or if the provided token doesn't match `bearerToken`.
+*   `enableDevToken`: A boolean flag. If `true`, the server first checks if the provided Bearer token matches the static `bearerToken`. If `false` or the token doesn't match, it proceeds to Hydra introspection. **Set to `false` in production.**
+
+**Authentication Flow:**
+
+1.  If `enableDevToken: true` AND the `Authorization: Bearer <token>` matches `bearerToken`, the request is authenticated using the static development token.
+2.  Otherwise (if `enableDevToken: false` OR the token does not match `bearerToken`), the server attempts to authenticate the token by calling the `hydraIntrospectionUrl`.
 
 ## Running the Server
 
@@ -109,8 +118,8 @@ curl http://localhost:3000/api/public
 
 *   **URL:** `/api/secure`
 *   **Method:** `GET`
-*   **Authentication:** Bearer Token required.
-*   **Description:** Returns a protected message and user information after successful authentication.
+*   **Authentication:** Bearer Token required (either static dev token or a valid Hydra token).
+*   **Description:** Returns a protected message and user information after successful authentication. The structure of the `user` object in the response depends on whether the static development token or Hydra introspection was used for authentication.
 
 **Example using `curl`:**
 
@@ -125,17 +134,45 @@ curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/api/secure
 *(Replace `localhost:3000` with the actual host and port if different)*
 
 **Expected Response (Success):**
-```json
-{
-  "message": "This is a protected route. Authentication successful!",
-  "user": {
-    "scope": "all",
-    "username": "service-account"
-  }
-}
-```
 
-**Expected Response (Failure - Incorrect or Missing Token):**
+The `user` object will vary based on the authentication method:
+
+*   **If authenticated using the static development token (`enableDevToken: true` and matching `bearerToken`):**
+    ```json
+    {
+      "message": "This is a protected route. Authentication successful!",
+      "user": {
+        "user": "dev_token_user",
+        "source": "dev_token",
+        "scope": "all",
+        "username": "dev-user"
+      }
+    }
+    ```
+
+*   **If authenticated using Hydra Introspection:** The `user` object will contain the fields returned by the Hydra introspection endpoint, plus a `source: "hydra"` field. The exact structure depends on Hydra's response, but might look something like this:
+    ```json
+    {
+      "message": "This is a protected route. Authentication successful!",
+      "user": {
+        "active": true,
+        "scope": "read write",
+        "client_id": "some_client",
+        "sub": "user-subject-identifier",
+        "exp": 1678886400,
+        "iat": 1678882800,
+        "iss": "http://localhost:4444/",
+        "token_type": "Bearer",
+        "ext": {
+          "custom_field": "custom_value"
+        },
+        "source": "hydra"
+      }
+    }
+    ```
+    *(Note: The actual fields returned by Hydra may vary based on the token and Hydra configuration.)*
+
+**Expected Response (Failure - Incorrect or Missing Token / Inactive Hydra Token):**
 ```
 Unauthorized
 ```

@@ -1,3 +1,5 @@
 port: 3000
 bindAddress: 0.0.0.0
 bearerToken: some-secret-token
+hydraIntrospectionUrl: http://localhost:4445/oauth2/introspect # URL for Hydra OAuth2 token introspection
+enableDevToken: true # Flag to enable/disable the static dev token

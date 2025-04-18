@@ -7,6 +7,8 @@ interface Config {
   port: number;
   bindAddress: string;
   bearerToken: string;
+  hydraIntrospectionUrl: string; // Added Hydra URL
+  enableDevToken: boolean;      // Added dev token flag
 }
 
 // Function to load and parse the YAML configuration file
@@ -24,8 +26,15 @@ function loadConfig(): Config {
     const config = yaml.load(fileContents) as Config;
 
     // Basic validation (can be expanded)
-    if (!config || typeof config.port !== 'number' || typeof config.bindAddress !== 'string' || typeof config.bearerToken !== 'string') {
-      throw new Error('Invalid configuration format');
+    if (
+      !config ||
+      typeof config.port !== 'number' ||
+      typeof config.bindAddress !== 'string' ||
+      typeof config.bearerToken !== 'string' ||
+      typeof config.hydraIntrospectionUrl !== 'string' || // Validate Hydra URL type
+      typeof config.enableDevToken !== 'boolean'         // Validate dev token flag type
+    ) {
+      throw new Error('Invalid or incomplete configuration format in config.yaml');
     }
 
     return config;
