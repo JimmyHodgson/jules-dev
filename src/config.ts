@@ -39,10 +39,15 @@ function loadConfig(): Config {
 
     return config;
   } catch (error) {
-    console.error('Failed to load configuration:', error);
-    // Provide default values or re-throw, depending on desired behavior
-    // For simplicity, we'll throw an error here, requiring the config file to exist and be valid.
-    throw new Error(`Could not load or parse config.yaml: ${error.message}`);
+    // Improved error handling: Check if it's an Error instance
+    let errorMessage = 'An unknown error occurred while loading config.yaml';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    // Optional: Log the original error for debugging
+    console.error('Raw config loading error:', error);
+    // Re-throw with a more informative message, ensuring error.message is accessed safely
+    throw new Error(`Could not load or parse config.yaml: ${errorMessage}`);
   }
 }
 
