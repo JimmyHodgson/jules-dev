@@ -2,12 +2,12 @@
   "name": "my-nodejs-project",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/server.js", # Update main entry point to compiled output
+  "main": "dist/server.js",
   "scripts": {
-    "build": "tsc", # Compile TypeScript to JavaScript
-    "start": "node dist/server.js", # Run compiled JavaScript
-    "dev": "nodemon src/server.ts", # Run with nodemon and ts-node for development
-    "test": "echo \"Error: no test specified\" && exit 1" # Keep the placeholder test script
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "nodemon src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
